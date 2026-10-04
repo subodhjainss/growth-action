@@ -1,0 +1,31 @@
+
+.env.local
+
+# Confidential runtime exports; never commit
+/data/
+
+# Preserve protection for the actual capitalized folder name
+/Data/
+
+# Build output, dependencies, session artifacts and confidential source material
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.auth-keys.json
+*.docx
+*.pdf
+.DS_Store
+test-results/
+playwright-report/
+.auth/
+.tmp/
+.impeccable/
+
+# Local installed tools, not product source
+.agents/
+skills-lock.json
+
+# Historical context includes confidential business figures
+/CODEX_CONTEXT.md
