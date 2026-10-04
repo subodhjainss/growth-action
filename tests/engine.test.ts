@@ -163,3 +163,22 @@ test("pending prior approval blocks a second change and retains the operator rea
   assert.equal(rejected.action, "SCALE UP");
   assert(rejected.evidence.contradicting.some((x) => x.includes("rejected")));
 });
+test("descriptive windows and reported ad age do not invent creative fatigue", () => {
+  const data = demoData(now);
+  for (const row of data.ads) {
+    row.adCreatedAt = "2026-09-01T08:00:00Z";
+    row.adStatus = "ACTIVE";
+    row.creativeId = "fictional-creative";
+  }
+  const card = assessImport(data, demoContext, { demo: true, now })[0];
+  assert.equal(card.evidence.recent1?.expectedDays, 1);
+  assert.equal(card.evidence.recent14?.expectedDays, 14);
+  assert.equal(card.evidence.dominantAds?.[0].ageDays, 34);
+  assert.equal(card.rca, "Unclear");
+  for (const row of data.ads) row.adCreatedAt = "";
+  const missing = assessImport(data, demoContext, { demo: true, now })[0];
+  assert.equal(missing.evidence.dominantAds?.[0].ageDays, null);
+  assert(
+    missing.evidence.contradicting.some((x) => x.includes("not creative age")),
+  );
+});

@@ -43,3 +43,17 @@ Calculation, parser and decision-memory tests pass. Three multi-step browser flo
 Screenshots in design/screens/ use invented data only. Phone-width browser checks are not a physical-phone/mobile-data check. No real account data was used in overnight runtime tests, screenshots or fixtures. Private original exports/source material, confidential historical context and secrets were excluded from public Git staging; the staged privacy-pattern scan reported no findings.
 
 Next gate: freeze the candidate, refresh private evidence and run OPERATOR_TEST.md independently on 3–5 current ad sets. Enable actionable account policy only after it passes. Separately establish product-level read-only Meta access; Codex MCP access is not an app connection.
+
+## Continued build — V1.1 manual planning foundation
+
+Implemented an additional Plan workspace with optional daily envelope, manual changes/unchanged budgets, deterministic money totals and private immutable draft versions. Restore loads earlier choices for review and creates a new version; originals remain unchanged. Server rejects stale imports, unsafe rows, outside-account object choices, excess ceiling and invalid money precision. Unknown/shared budget control is excluded and totals explicitly remain partial. No plan approval, Meta execution, forecast or automatic allocation policy exists.
+
+Fourteen domain/parser/planning tests pass. The repeat-import/private flow now also verifies saved column reuse, prior decision evidence and private plan persistence after reload. A phone browser flow verifies envelope errors and three immutable draft versions with restoration. All four browser flows subsequently passed together on development. One Chrome page-setup timeout occurred before a page opened; the affected review/history test passed on rerun. All four flows passed on the updated published production build. Frontend/backend deployment completed through npm run deploy.
+
+This is V1.1 groundwork only. Its campaign-budget, traffic-objective, Google, controlled-improvement and full planning acceptance gates remain open. It does not mean V1 intelligence is validated.
+
+## Data-contract follow-through
+
+Ad settings now preserve reported creation/update times, current status and creative ID; reach/frequency stay raw and are not summed. Why includes one-day/14-day descriptive windows and the top three ads’ spend share, own ROAS/CTR comparison and known ad creation age. Unknown or timezone-ambiguous creation dates stay unverified. First appearance in an import is not creation age, and ad age is not necessarily reused creative age. No causal fatigue classification or new final threshold was enabled.
+
+Money formatting preserves up to two decimal places when needed instead of rounding approved/observed budgets to whole currency units. Integer budgets stay concise. Mandatory performance arithmetic stays deterministic.

@@ -1,3 +1,4 @@
+import { BudgetPlan } from "./BudgetPlan";
 import { useEffect, useRef, useState } from "react";
 import { useAction, useMutation, useQuery, useConvexAuth } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
@@ -58,7 +59,7 @@ import {
   type ParsedFile,
 } from "./importCsv";
 const api = anyApi;
-type Screen = "website" | "brand" | "setup" | "today" | "history";
+type Screen = "website" | "brand" | "setup" | "today" | "history" | "plan";
 interface DemoState {
   context: BusinessContext;
   data: ImportData;
@@ -114,7 +115,8 @@ const money = (n: number | null, c = "INR") =>
     : new Intl.NumberFormat("en-IN", {
         style: "currency",
         currency: c,
-        maximumFractionDigits: 0,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
       }).format(n);
 function MathField() {
   return (
@@ -640,6 +642,79 @@ export default function App() {
             Concentration alone does not prove fatigue.
           </p>
         )}
+        {(ev.recent1 || ev.recent14) && (
+          <details>
+            <summary>One-day and 14-day context</summary>
+            <div className="metrics-grid">
+              {[
+                ["Latest complete day", ev.recent1],
+                ["Latest 14 days", ev.recent14],
+              ]
+                .filter(([, m]) => m)
+                .map(([label, m]: any) => (
+                  <div key={label}>
+                    <span>{label}</span>
+                    <strong>
+                      {m.roas === null
+                        ? "Unavailable"
+                        : `${m.roas.toFixed(2)}× ROAS`}
+                    </strong>
+                    <small>
+                      {m.start} → {m.end}
+                    </small>
+                    <small>
+                      {m.days}/{m.expectedDays} days ·{" "}
+                      {m.purchases ?? "Unknown"} purchases
+                    </small>
+                  </div>
+                ))}
+            </div>
+            <p>
+              These descriptive views overlap other windows; agreement does not
+              count as independent statistical proof.
+            </p>
+          </details>
+        )}
+        {ev.dominantAds && ev.dominantAds.length > 0 && (
+          <details>
+            <summary>Top-spending ads and known age</summary>
+            {ev.dominantAds.map((ad) => (
+              <section className="creative-evidence" key={ad.adId}>
+                <h4>{ad.name}</h4>
+                <p>
+                  {(ad.spendShare * 100).toFixed(1)}% of recent ad spend ·{" "}
+                  {ad.ageDays === null
+                    ? "Creation age unverified"
+                    : `${ad.ageDays} days since the reported ad creation time`}
+                </p>
+                <p>
+                  First seen in this import: {ad.firstSeenDate}. This is not its
+                  creation date.
+                </p>
+                <p>
+                  ROAS: {ad.previous.roas?.toFixed(2) ?? "Unavailable"} →{" "}
+                  {ad.recent.roas?.toFixed(2) ?? "Unavailable"}. CTR:{" "}
+                  {ad.previous.ctr === null
+                    ? "Unavailable"
+                    : `${(ad.previous.ctr * 100).toFixed(2)}%`}{" "}
+                  →{" "}
+                  {ad.recent.ctr === null
+                    ? "Unavailable"
+                    : `${(ad.recent.ctr * 100).toFixed(2)}%`}
+                  .
+                </p>
+                <p>
+                  Creative ID: {ad.creativeId ?? "Not provided"} · Current
+                  status: {ad.status ?? "Not provided"}.
+                </p>
+              </section>
+            ))}
+            <p>
+              Ad age is not creative age when an existing creative is reused.
+              Changes in these signals do not establish fatigue or causality.
+            </p>
+          </details>
+        )}
         <details>
           <summary>Calculation definitions & policy</summary>
           <p>
@@ -893,7 +968,8 @@ export default function App() {
           ["NEEDS CONTEXT", "INSUFFICIENT EVIDENCE"].includes(c.action))) &&
       c.name.toLowerCase().includes(search.toLowerCase()),
   );
-  const appScreen = screen === "today" || screen === "history";
+  const appScreen =
+    screen === "today" || screen === "history" || screen === "plan";
   return (
     <div className={`app ${appScreen ? "workspace-mode" : "onboarding-mode"}`}>
       <header className="header">
@@ -913,6 +989,12 @@ export default function App() {
                   onClick={() => navigate("history")}
                 >
                   History
+                </button>
+                <button
+                  className={screen === "plan" ? "active" : ""}
+                  onClick={() => navigate("plan")}
+                >
+                  Plan
                 </button>
               </nav>
               <div className="header-right">
@@ -975,6 +1057,7 @@ export default function App() {
           <nav className="mobile-nav">
             <button onClick={() => navigate("today")}>Today</button>
             <button onClick={() => navigate("history")}>History</button>
+            <button onClick={() => navigate("plan")}>Plan</button>
           </nav>
         )}
       </header>
@@ -1000,6 +1083,17 @@ export default function App() {
           <CheckCircle2 size={17} />
           {toast}
         </div>
+      )}
+      {screen === "plan" && (
+        <BudgetPlan
+          cards={cards}
+          context={liveContext}
+          currency={currencyUsed}
+          accountId={workspace?.accountId}
+          importId={workspace?.latestImport?.id}
+          isDemo={demoActive}
+          onBack={() => navigate("today")}
+        />
       )}
       {screen === "website" && (
         <main className="website-screen">

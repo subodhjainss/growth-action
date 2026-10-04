@@ -58,6 +58,9 @@ const aliases: Record<string, string[]> = {
   updated: ["last_updated_time", "updated_time"],
   reach: ["reach"],
   frequency: ["frequency"],
+  adCreated: ["ad_created_time", "ad_start_time"],
+  adUpdated: ["ad_updated_time"],
+  creativeId: ["creative_id"],
   objectId: ["object_id"],
   changedAt: ["changed_at"],
   oldBudget: ["old_budget_inr", "old_budget"],
@@ -266,6 +269,12 @@ export function assemble(
         if (f.kind === "ads") {
           d.adId = get(r, "adId");
           d.adName = get(r, "adName") || get(ad, "adName");
+          d.adStatus = get(ad, "status") || get(r, "status");
+          d.adCreatedAt =
+            get(ad, "adCreated") || get(ad, "created") || get(r, "adCreated");
+          d.adUpdatedAt =
+            get(ad, "adUpdated") || get(ad, "updated") || get(r, "adUpdated");
+          d.creativeId = get(ad, "creativeId") || get(r, "creativeId");
           result.ads.push(d);
         } else result.adsets.push(d);
         if (f.kind === "adsets" && !settings.has(id) && get(r, "budget"))

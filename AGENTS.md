@@ -2,11 +2,11 @@
 
 ## 1. How the product works
 
-Interface: responsive web app for phone and desktop. The core action is reviewing the next Meta ad-set budget decision, understanding Why, and saving approval/edit/rejection. Five screens: Website, Business understanding, Account setup, Today and History.
+Interface: responsive web app for phone and desktop. The core action is reviewing the next Meta ad-set budget decision, understanding Why, and saving approval/edit/rejection. Core screens: Website, Business understanding, Account setup, Today and History. V1.1 adds the explicitly manual Plan workspace.
 
 Business logic: deterministic calculations and safety checks construct structured evidence before any explanation. V1 supports sales/purchase objectives and independently controlled daily ad-set budgets. Minimum efficiency, desired overall average and verified spend-specific expectations are separate. Real final rule parameters remain UNVALIDATED until the independent operator test; never let demo rules become customer rules. Approval saves a decision; later configuration reads infer implementation separately.
 
-Database: Convex auth tables hold identities/sessions. accounts stores owner-scoped business context and saved mappings; imports stores package state/metadata; importChunks stores bounded normalized performance/settings/history batches; recommendations stores original five fields/evidence/policy version; decisions stores the user's final choice without overwriting recommendations; implementations stores later configuration observations. Index every read and authorize ownership in Convex.
+Database: Convex auth tables hold identities/sessions. accounts stores owner-scoped business context and saved mappings; imports stores package state/metadata; importChunks stores bounded normalized performance/settings/history batches; recommendations stores original five fields/evidence/policy version; decisions stores the user's final choice without overwriting recommendations; implementations stores later configuration observations; budgetPlans stores immutable manual draft versions, source/context snapshots, daily envelope and restore lineage. Index every read and authorize ownership in Convex.
 
 Third party: Convex provides backend/database/auth/static hosting. Meta read-only Marketing API is the main intended path, but actual app access is not configured; CSV is the working fallback. Public website reading is a bounded server-side metadata request, not an LLM analysis. Any future AI/Meta secrets live in Convex environment variables, separately set in dev and production. Never ask the builder to paste secrets in chat. No alternative hosting/auth/database.
 
@@ -49,3 +49,8 @@ The LLM may summarize verified facts, explain evidence and phrase the minimum co
 ## 5. Approved roadmap
 
 V1/V1.1 remain D2C/fashion. V1.1 requires controlled researched/tested/user-approved improvement with policy/model versions and restoration; overall Meta budget planning; shared campaign-budget support; traffic objectives; and independent Google connection/decisioning. External pilots requiring these capabilities are not supported before their gates pass. Planning across platforms and additional business types belong in V2. Researching statistical ideas does not silently authorize advanced prediction in V1.
+
+## Continued overnight build
+
+V1 repeat-import column choices now persist by header signature; changed headers require review. Prior operator decisions feed next-import evidence and unresolved changes block stacked recommendations.
+V1.1 Plan is a manual foundation, not validated allocation or approved execution. Server enforces current import, budget scope, safety gaps, envelope, money precision and private ownership. A restore creates a new version after current-evidence validation. No shared campaign/traffic/Google support or final V1.1 acceptance is implied by the Plan tab.

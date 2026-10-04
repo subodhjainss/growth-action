@@ -282,6 +282,23 @@ test("private signup import decision and reload preserve evidence without enabli
   await expect(
     nextCard.getByText(/Previous operator decision: NO_ACTION_CONFIRMED/),
   ).toBeVisible();
+  await page.getByRole("button", { name: "Plan", exact: true }).click();
+  await page.getByLabel("Daily budget envelope").fill("40000");
+  await page
+    .getByLabel("Why save this version?")
+    .fill("Review unchanged synthetic budgets.");
+  await page.getByRole("button", { name: "Save draft version" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Version 1 · Draft", exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(
+    page.getByRole("heading", { name: /Your budget decisions today/ }),
+  ).toBeVisible({ timeout: 15000 });
+  await page.getByRole("button", { name: "Plan", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Version 1 · Draft", exact: true }),
+  ).toBeVisible();
   const other = await browser.newContext();
   const outsider = await other.newPage();
   await outsider.goto("/");
@@ -290,4 +307,83 @@ test("private signup import decision and reload preserve evidence without enabli
   ).toBeVisible();
   await expect(outsider.getByText("Everyday tees")).toHaveCount(0);
   await other.close();
+});
+
+test("phone budget planning checks the envelope and restores choices as a new immutable draft", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Explore the demo" }).click();
+  await page.getByRole("button", { name: "Open navigation" }).click();
+  await page.getByRole("button", { name: "Plan", exact: true }).last().click();
+  await expect(
+    page.getByRole("heading", { name: /Plan your Meta budgets/ }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Partial account scope.", { exact: true }),
+  ).toBeVisible();
+  await page.getByLabel("Daily budget envelope").fill("28000");
+  await expect(page.getByText(/included daily budgets exceed/)).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Save draft version" }),
+  ).toBeDisabled();
+  await page.getByLabel("Daily budget envelope").fill("29000");
+  await page
+    .getByLabel("Everyday tees draft daily budget", { exact: true })
+    .fill("10500");
+  await page
+    .getByLabel("Soft knitwear draft daily budget", { exact: true })
+    .fill("5500");
+  await page
+    .getByLabel("Why save this version?")
+    .fill("Move a small invented budget between supported ad sets.");
+  await page.getByRole("button", { name: "Save draft version" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Version 1 · Draft", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByLabel("Everyday tees draft daily budget", { exact: true })
+    .fill("10000");
+  await page
+    .getByLabel("Soft knitwear draft daily budget", { exact: true })
+    .fill("6000");
+  await page
+    .getByLabel("Why save this version?")
+    .fill("Return to the invented starting amounts.");
+  await page.getByRole("button", { name: "Save draft version" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Version 2 · Draft", exact: true }),
+  ).toBeVisible();
+  await page
+    .locator(".plan-version")
+    .filter({
+      has: page.getByRole("heading", {
+        name: "Version 1 · Draft",
+        exact: true,
+      }),
+    })
+    .getByRole("button", { name: "Use these choices" })
+    .click();
+  await expect(
+    page.getByLabel("Everyday tees draft daily budget", { exact: true }),
+  ).toHaveValue("10500");
+  await page
+    .getByRole("button", { name: "Save restored choices as new version" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Version 3 · Draft", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Version 1 · Draft", exact: true }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: "design/screens/planning-phone.png",
+    fullPage: true,
+  });
 });

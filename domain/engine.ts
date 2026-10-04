@@ -16,7 +16,8 @@ const money = (x: number, currency = "INR") =>
   new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(x);
 const shift = (s: string, n: number) =>
   new Date(Date.parse(s + "T00:00:00Z") + n * 86400000)
@@ -403,9 +404,47 @@ export function assessImport(
       missing.push(
         "Action, sample, observation and magnitude parameters remain UNVALIDATED pending Gate 1.",
       );
+    const dominantAds = [...adSpend.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([adId, spend]) => {
+        const adRows = data.ads.filter(
+          (a) => a.adsetId === s.adsetId && a.adId === adId,
+        );
+        const latest = [...adRows].sort((a, b) =>
+          b.date.localeCompare(a.date),
+        )[0];
+        const created = latest?.adCreatedAt;
+        const validCreated =
+          created &&
+          /(Z|[+-]\d{2}:?\d{2})$/.test(created) &&
+          Number.isFinite(Date.parse(created)) &&
+          Date.parse(created) <= now.getTime();
+        return {
+          adId,
+          name: latest?.adName ?? adId,
+          creativeId: latest?.creativeId || null,
+          status: latest?.adStatus || null,
+          createdAt: validCreated ? created : null,
+          ageDays: validCreated
+            ? Math.floor((now.getTime() - Date.parse(created!)) / 86400000)
+            : null,
+          firstSeenDate: adRows.map((a) => a.date).sort()[0] ?? "",
+          spendShare: total ? spend / total : 0,
+          recent: metrics(adRows, recent.start, end),
+          previous: metrics(adRows, previous.start, previous.end),
+        };
+      });
+    if (dominantAds.some((a) => a.ageDays === null))
+      contradicting.push(
+        "Known creation times are missing or unverified for some dominant ads. First appearance in this import is not creative age; no age-based fatigue claim is supported.",
+      );
     const evidence: Evidence = {
       recent,
       previous,
+      recent1: metrics(rows, end, end),
+      recent14: metrics(rows, shift(end, -13), end),
+      dominantAds,
       recent3,
       previous3,
       supporting,

@@ -21,3 +21,9 @@ Open https://rapid-gull-487.convex.site on your phone, signed out and on mobile 
 - Unable to verify: covered by deterministic tests for missing/wrong-budget-object/stale observations; the synthetic UI does not currently offer a dedicated unknown-read simulator.
 
 Real CSV persistence was browser-tested using invented files through signup → import → evidence → decision → reload → history. A later complete configuration import is required to infer real implementation. Read-only Meta refresh remains blocked by connection setup.
+
+## Try the new Plan workspace
+
+In the synthetic demo, open the phone menu → Plan. Set a daily envelope; an amount below the included configured budgets shows an error and blocks save. Change Everyday tees and Soft knitwear, add your reason, then Save draft version. Save another set of choices. Under the first version choose Use these choices, review against current evidence and save as a new version. Confirm originals remain. This is a manual draft, not approved recommendations or real account changes. Studio collection is excluded; New arrivals remains read-only. Partial totals are not the whole account’s budget or its actual spend.
+
+On CSV upload, open Review columns for a file when automatic mapping is incomplete. Choices are saved privately; uploading the same headers with a different filename reuses them. An altered header requires review.

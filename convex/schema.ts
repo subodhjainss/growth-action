@@ -62,6 +62,22 @@ export default defineSchema({
   })
     .index("by_account", ["accountId"])
     .index("by_recommendation", ["recommendationId"]),
+  budgetPlans: defineTable({
+    accountId: v.id("accounts"),
+    ownerId: v.id("users"),
+    importId: v.id("imports"),
+    version: v.number(),
+    status: v.literal("DRAFT"),
+    envelope: v.union(v.number(), v.null()),
+    objective: v.string(),
+    reason: v.string(),
+    proposedBudgets: v.any(),
+    evaluation: v.any(),
+    contextSnapshot: v.any(),
+    sourceSnapshots: v.any(),
+    restoredFrom: v.optional(v.id("budgetPlans")),
+    createdAt: v.number(),
+  }).index("by_account", ["accountId"]),
   implementations: defineTable({
     accountId: v.id("accounts"),
     ownerId: v.id("users"),

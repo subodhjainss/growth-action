@@ -5,7 +5,7 @@ A Meta-first budget decision workspace for D2C/fashion. This is a working candid
 Live: https://rapid-gull-487.convex.site  
 Public source: https://github.com/subodhjainss/growth-action
 
-Start with **Explore the demo** to try invented examples without signing in. Website entry, editable business context, private sign-in, CSV ingestion, evidence cards and persistent decision history are implemented. The demo shows approval separately from matching, mismatching and unchanged later budget observations.
+Start with **Explore the demo** to try invented examples without signing in. Website entry, editable business context, private sign-in, reusable CSV column mappings, decision memory, evidence cards and persistent decision history are implemented. V1.1’s manual Meta budget-draft workspace adds envelopes and immutable versions with restoration; it remains a foundation, not validated overall allocation. The demo shows approval separately from matching, mismatching and unchanged later budget observations.
 
 Live Meta access and LLM calls are not configured. Website reading extracts public metadata; it is not a trained business model. Real CSV imports get deterministic evidence and honest safety states. They cannot inherit the demo’s example budget rules. Gate 1 must pass before real action/magnitude recommendations are enabled.
 

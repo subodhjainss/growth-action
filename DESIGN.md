@@ -203,3 +203,16 @@ Implementation states remain as specified above. Synthetic simulation allows Mat
 ## Verification and phone walkthrough
 
 See PHONE_CHECK.md for the live flow and state checks. Screenshots in design/screens/ contain invented data only. Physical phone/mobile-data verification remains for the builder tomorrow.
+
+## V1.1 foundation — Meta budget drafts (5 October)
+
+Authorized by the builder’s instruction to continue into V1.1 after finishing independent V1 work. Core five screens remain; Plan is an additional returning-user workspace. It does not bypass outstanding V1 operator/access gates.
+
+Plan: for recording a manual daily-budget draft and its envelope. Top to bottom: title/Back to Today; manual-draft and partial-scope notices; daily envelope and objective; included current versus draft totals; ad-set choices with explicit read-only/excluded reasons; version reason; save; earlier versions. Main action: Save draft version → same screen with new immutable version.
+Empty first visit: “No plan versions yet. Your first saved draft will appear here.” Empty coming back: existing versions remain; no imported evidence means import before saving. Loading: “Loading your saved plans…” / “Saving draft…”. Error: specific envelope/evidence gap, keep unsaved choices and previous versions. Done: “Draft version saved. No recommendation was approved and no Meta budget changed.”
+Wrong answer: these are operator choices, not an AI allocation. Correct the choice/context or load an earlier version and save a new version. Never overwrite the prior record. Current safety-blocked rows are read-only. Excluded campaign/unknown budgets are not summed as independent ad sets. Label totals partial when coverage is incomplete, and never forecast spend or ROAS from configured budget.
+Same warm palette/DM Sans hierarchy; aligned numerals and generous row spacing, stacked on phone. No new decorative assets, dashboard charts or competing approval button.
+
+CSV mapping update: each uploaded file has a collapsible column-review section. Recognized columns are preselected. Unknown file kind can be selected explicitly. Save privately by normalized header set and reuse regardless of filename; changed headers require review. Link clicks and outbound clicks are never silently treated as equivalent.
+
+Why evidence expansion: one-day/14-day context and top-spending ads sit in collapsible evidence sections, never as new visible card fields. Each ad shows observed metrics, reported creation age when verifiable and imported first-seen date separately. Missing age stays unverified; no creative-fatigue claim or statistical superiority implied.

@@ -22,6 +22,10 @@ export interface DailyRow {
   adsetName: string;
   adId?: string;
   adName?: string;
+  adStatus?: string;
+  adCreatedAt?: string;
+  adUpdatedAt?: string;
+  creativeId?: string;
   spend: number;
   impressions: number;
   clicks: number | null;
@@ -84,9 +88,24 @@ export interface WindowMetrics {
   cpa: number | null;
   missing: string[];
 }
+export interface AdEvidence {
+  adId: string;
+  name: string;
+  creativeId: string | null;
+  status: string | null;
+  createdAt: string | null;
+  ageDays: number | null;
+  firstSeenDate: string;
+  spendShare: number;
+  recent: WindowMetrics;
+  previous: WindowMetrics;
+}
 export interface Evidence {
   recent: WindowMetrics;
   previous: WindowMetrics;
+  recent1?: WindowMetrics;
+  recent14?: WindowMetrics;
+  dominantAds?: AdEvidence[];
   recent3: WindowMetrics;
   previous3: WindowMetrics;
   supporting: string[];
