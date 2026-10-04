@@ -17,7 +17,7 @@ This is a functioning candidate, not a passed intelligence gate or completed ext
 | Test | Status and limit |
 | --- | --- |
 | AT-1 first import | Synthetic browser import works. Real package structure was privately inspected earlier; no real-runtime import was used in this overnight build. Real end-to-end acceptance remains open. |
-| AT-2 repeat mapping | Recognized aliases and file-to-dataset mappings persist; current parser reapplies its fixed aliases. Custom saved column mapping/reuse is incomplete. |
+| AT-2 repeat mapping | Versioned custom column choices persist and are reused by matching header sets, including changed filenames. Browser repeat import and parser tests pass; changed columns require review. |
 | AT-3 insufficient data | Missing/invalid fields block explicitly; unit/server/browser checks use invented data. |
 | AT-4 five fields | Rendered cards show the required five recommendation fields, with identity and separate workflow state. |
 | AT-5 Why | Deterministic evidence, contradictions, gaps, windows and policy labels visible. |
@@ -32,13 +32,13 @@ This is a functioning candidate, not a passed intelligence gate or completed ext
 
 ## Hard-coded and unvalidated
 
-Seven-day comparisons, a three-day supporting view, snapshot freshness limits and intervention safeguards are transparent prototype choices. Demo sizing is an invented 5% example, not an account rule. Confidence labels are illustrative/uncalibrated. RCA is Unclear until validated cause rules exist. Optimization preferences are stored, not a spend-response model. Full natural-language correction/explanation is not connected; field-prefix corrections and direct edits work.
+Prior operator decisions/reasons now enter subsequent evidence; unresolved budget changes block stacked recommendations. Seven-day comparisons, a three-day supporting view, snapshot freshness limits and intervention safeguards are transparent prototype choices. Demo sizing is an invented 5% example, not an account rule. Confidence labels are illustrative/uncalibrated. RCA is Unclear until validated cause rules exist. Optimization preferences are stored, not a spend-response model. Full natural-language correction/explanation is not connected; field-prefix corrections and direct edits work.
 
 No predictive fatigue, advanced statistical model, automatic execution or self-changing agent was added. V1.1 required capabilities remain in PLAN.md rather than being silently pushed to V2.
 
 ## Verification and remaining checks
 
-Seven deterministic tests pass. Three multi-step browser flows passed on the live development host: review/implementation/history, first-time phone onboarding, and private signup/import/persistence/logged-out isolation. Production backend signup/private persistence/sign-out isolation passed. All three flows also passed on the published production frontend. npm run deploy completed successfully.
+Calculation, parser and decision-memory tests pass. Three multi-step browser flows passed on the live development host: review/implementation/history, first-time phone onboarding, and private signup/import/persistence/logged-out isolation. Production backend signup/private persistence/sign-out isolation passed. All three flows also passed on the published production frontend. npm run deploy completed successfully.
 
 Screenshots in design/screens/ use invented data only. Phone-width browser checks are not a physical-phone/mobile-data check. No real account data was used in overnight runtime tests, screenshots or fixtures. Private original exports/source material, confidential historical context and secrets were excluded from public Git staging; the staged privacy-pattern scan reported no findings.
 

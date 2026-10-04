@@ -129,3 +129,37 @@ test("duplicate keys, future observations and wrong objectives cannot pass", () 
     "INSUFFICIENT EVIDENCE",
   );
 });
+test("pending prior approval blocks a second change and retains the operator reason", () => {
+  const data = demoData(now);
+  const card = assessImport(data, demoContext, { demo: true, now })[0];
+  const prior: Decision = {
+    id: "prior",
+    recommendationKey: "older",
+    adsetId: card.adsetId,
+    name: card.name,
+    action: card.action,
+    decision: "APPROVED",
+    baselineBudget: card.currentBudget,
+    finalBudget: card.nextBudget,
+    reason: "Wait for the new budget to settle.",
+    decidedAt: "2026-10-04T08:00:00Z",
+    originalRecommendation: card,
+  };
+  const assessed = assessImport(data, demoContext, {
+    demo: true,
+    now,
+    priorDecisions: [prior],
+  })[0];
+  assert.equal(assessed.action, "INSUFFICIENT EVIDENCE");
+  assert(
+    assessed.evidence.safety.some((x) => x.includes("prior approved change")),
+  );
+  assert(assessed.evidence.supporting.some((x) => x.includes(prior.reason)));
+  const rejected = assessImport(data, demoContext, {
+    demo: true,
+    now,
+    priorDecisions: [{ ...prior, decision: "REJECTED" }],
+  })[0];
+  assert.equal(rejected.action, "SCALE UP");
+  assert(rejected.evidence.contradicting.some((x) => x.includes("rejected")));
+});

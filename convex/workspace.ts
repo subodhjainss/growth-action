@@ -18,6 +18,7 @@ import type {
   Decision,
   Recommendation,
 } from "../domain/types";
+import { validateMapping } from "./mapping";
 const contextValidator = v.object({
   website: v.string(),
   brandName: v.string(),
@@ -149,6 +150,7 @@ async function persistImport(
   existingId?: Id<"imports">,
 ) {
   const a = await account(ctx, args.accountId);
+  const mapping = validateMapping(args.mapping);
   const data = args.data as ImportData;
   if (
     !data ||
@@ -227,9 +229,34 @@ async function persistImport(
     throw new ConvexError(
       "Currency or timezone differs from the saved account. Confirm account metadata before importing.",
     );
+  const decisions = await ctx.db
+    .query("decisions")
+    .withIndex("by_account", (q) => q.eq("accountId", a._id))
+    .order("desc")
+    .take(100);
+  const priorDecisions: Decision[] = [];
+  for (const saved of decisions) {
+    const original = await ctx.db.get(saved.recommendationId);
+    if (!original) continue;
+    const recommendation = original.payload as Recommendation;
+    priorDecisions.push({
+      id: saved._id,
+      recommendationKey: recommendation.key,
+      adsetId: recommendation.adsetId,
+      name: recommendation.name,
+      action: recommendation.action,
+      decision: saved.decision,
+      baselineBudget: recommendation.currentBudget,
+      finalBudget: saved.finalBudget,
+      reason: saved.reason,
+      decidedAt: new Date(saved.createdAt).toISOString(),
+      originalRecommendation: recommendation,
+    });
+  }
   const recs = assessImport(data, a.context as BusinessContext, {
     policyValidated: false,
     demo: false,
+    priorDecisions,
   });
   const now = Date.now();
   const id =
@@ -258,11 +285,6 @@ async function persistImport(
       policyVersion: r.evidence.policyVersion,
       createdAt: now,
     });
-  const decisions = await ctx.db
-    .query("decisions")
-    .withIndex("by_account", (q) => q.eq("accountId", a._id))
-    .order("desc")
-    .take(100);
   for (const d of decisions) {
     if (d.decision === "REJECTED") continue;
     const original = await ctx.db.get(d.recommendationId);
@@ -306,7 +328,7 @@ async function persistImport(
     });
   }
   await ctx.db.patch(a._id, {
-    mapping: args.mapping,
+    mapping,
     externalAccountId,
     currency: data.currency,
     timezone: data.timezone,
@@ -430,6 +452,7 @@ export const beginImport = mutation({
   returns: v.id("imports"),
   handler: async (ctx, args) => {
     const a = await account(ctx, args.accountId);
+    const mapping = validateMapping(args.mapping);
     if (
       JSON.stringify(args.metadata).length > 10000 ||
       JSON.stringify(args.mapping).length > 10000
@@ -438,7 +461,7 @@ export const beginImport = mutation({
     return ctx.db.insert("imports", {
       accountId: a._id,
       ownerId: a.ownerId,
-      data: { metadata: args.metadata, mapping: args.mapping },
+      data: { metadata: args.metadata, mapping },
       source: "CSV",
       status: "uploading",
       createdAt: Date.now(),

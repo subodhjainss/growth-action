@@ -19,3 +19,9 @@ Not implicitly authorized: automatic execution, proactive alerts, advanced spend
 - Working product-level read-only Meta access and verified request fields/attribution; Codex MCP login alone is not product access.
 - Operator validation of action/magnitude/sample/wait/confidence parameters.
 - AI provider credentials and spending allowance before enabling server-side LLM calls. Website metadata reading and deterministic evidence remain available without a key.
+
+## Continued overnight authorization — 5 October
+
+V1 follow-through: finish actual column-map reuse and prior-decision evidence; verify repeat import end to end. These work independently of external credentials/operator validation.
+Next V1.1 foundation: manual Meta daily-budget drafts with an explicit envelope, unchanged/changed budgets, honest incomplete scope, private immutable versions and copy-to-new-version restoration. This is not an automatic allocation policy, forecast or completed V1.1 acceptance gate. Shared campaign decisions, traffic/Google and controlled research activation still require their own supported contracts/gates.
+The user authorized continued build/test/iteration without waiting overnight. V1.1 foundations must not be called complete while V1 external gates remain open.

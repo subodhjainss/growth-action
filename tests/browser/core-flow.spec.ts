@@ -172,7 +172,7 @@ test("private signup import decision and reload preserve evidence without enabli
     x.purchases,
     x.value,
   ];
-  await page.locator("input[type=file]").setInputFiles([
+  const csvFiles = [
     {
       name: "synthetic_adsets.csv",
       mimeType: "text/csv",
@@ -216,9 +216,10 @@ test("private signup import decision and reload preserve evidence without enabli
         ]),
       ),
     },
-  ]);
+  ];
+  await page.locator("input[type=file]").setInputFiles(csvFiles);
   await expect(
-    page.getByText("synthetic_settings.csv", { exact: false }),
+    page.getByText("synthetic_settings.csv", { exact: false }).first(),
   ).toBeVisible();
   await page
     .getByLabel("Account timezone", { exact: true })
@@ -257,6 +258,29 @@ test("private signup import decision and reload preserve evidence without enabli
   await page.getByRole("button", { name: "History", exact: true }).click();
   await expect(
     page.getByRole("button", { name: /Everyday tees/ }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Back to Today" }).click();
+  await page.getByRole("button", { name: "Refresh with CSV" }).click();
+  await page.getByRole("button", { name: "Upload CSVs", exact: true }).click();
+  await page
+    .locator("input[type=file]")
+    .setInputFiles(csvFiles.map((f) => ({ ...f, name: `repeat_${f.name}` })));
+  await expect(
+    page.locator(".file-list").getByText(/Saved mapping reused/),
+  ).toHaveCount(3);
+  await page.getByLabel(/I verified that attribution/).check();
+  await page
+    .getByRole("button", { name: "Validate and review decisions" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: /Your budget decisions today/ }),
+  ).toBeVisible({ timeout: 30000 });
+  const nextCard = page
+    .locator("article.decision-card")
+    .filter({ has: page.getByRole("heading", { name: "Everyday tees" }) });
+  await nextCard.getByRole("button", { name: "Why?" }).click();
+  await expect(
+    nextCard.getByText(/Previous operator decision: NO_ACTION_CONFIRMED/),
   ).toBeVisible();
   const other = await browser.newContext();
   const outsider = await other.newPage();

@@ -9,6 +9,8 @@ export interface ParsedFile {
   name: string;
   headers: string[];
   rows: Record<string, string>[];
+  columns?: Record<string, string>;
+  mappingSource?: "automatic" | "saved" | "edited";
   kind:
     | "adsets"
     | "ads"
@@ -36,7 +38,7 @@ const aliases: Record<string, string[]> = {
   adName: ["ad_name"],
   spend: ["amount_spent_inr", "amount_spent", "spend"],
   impressions: ["impressions"],
-  clicks: ["link_clicks", "link_clicks_all", "outbound_clicks"],
+  clicks: ["link_clicks", "link_clicks_all"],
   purchases: ["website_purchases", "purchases"],
   value: [
     "website_purchase_value_inr",
@@ -54,8 +56,87 @@ const aliases: Record<string, string[]> = {
   attribution: ["attribution_setting"],
   created: ["created_time"],
   updated: ["last_updated_time", "updated_time"],
+  reach: ["reach"],
+  frequency: ["frequency"],
+  objectId: ["object_id"],
+  changedAt: ["changed_at"],
+  oldBudget: ["old_budget_inr", "old_budget"],
+  newBudget: ["new_budget_inr", "new_budget"],
 };
 export const fieldMapping = aliases;
+export interface MappingProfile {
+  kind: Exclude<ParsedFile["kind"], "unknown">;
+  headers: string[];
+  columns: Record<string, string>;
+}
+export interface SavedMapping {
+  version: 1;
+  profiles: MappingProfile[];
+}
+const signature = (headers: string[]) => [...headers].sort().join("|");
+export function applySavedMapping(
+  file: ParsedFile,
+  saved: unknown,
+): ParsedFile {
+  if (
+    !saved ||
+    typeof saved !== "object" ||
+    (saved as SavedMapping).version !== 1 ||
+    !Array.isArray((saved as SavedMapping).profiles)
+  )
+    return file;
+  const profile = (saved as SavedMapping).profiles.find(
+    (p) => signature(p.headers) === signature(file.headers),
+  );
+  if (!profile) return file;
+  return {
+    ...file,
+    kind: profile.kind,
+    columns: { ...profile.columns },
+    mappingSource: "saved",
+  };
+}
+export function saveMapping(
+  files: ParsedFile[],
+  previous: unknown,
+): SavedMapping {
+  const profiles: MappingProfile[] =
+    previous &&
+    typeof previous === "object" &&
+    (previous as SavedMapping).version === 1
+      ? [...(previous as SavedMapping).profiles]
+      : [];
+  for (const file of files) {
+    if (file.kind === "unknown")
+      throw new Error("Choose a dataset for every file before importing.");
+    const profile: MappingProfile = {
+      kind: file.kind,
+      headers: file.headers,
+      columns: file.columns ?? {},
+    };
+    const index = profiles.findIndex(
+      (p) => signature(p.headers) === signature(file.headers),
+    );
+    if (index < 0) profiles.push(profile);
+    else profiles[index] = profile;
+  }
+  return { version: 1, profiles: profiles.slice(-20) };
+}
+function mappedRow(
+  file: ParsedFile,
+  row: Record<string, string>,
+): Record<string, string> {
+  if (!file.columns) return row;
+  const mapped = { ...row };
+  for (const [key, choices] of Object.entries(aliases)) {
+    const selected = file.columns[key];
+    if (selected && !file.headers.includes(selected))
+      throw new Error("A saved column is absent. Review the file mapping.");
+    for (const header of choices) delete mapped[header];
+    if (selected) mapped[choices[0]] = row[selected] ?? "";
+  }
+  return mapped;
+}
 function get(r: Record<string, string>, key: string) {
   for (const alias of aliases[key] ?? [key]) {
     if (r[alias] !== undefined && r[alias] !== "") return r[alias];
@@ -103,7 +184,20 @@ export async function parseFile(file: File): Promise<ParsedFile> {
   else if (headers.includes("adset_id") || headers.includes("ad_set_id"))
     kind = "settings";
   else if (headers.includes("campaign_id")) kind = "campaigns";
-  return { name: file.name, headers, rows: result.data, kind };
+  const columns = Object.fromEntries(
+    Object.entries(aliases).map(([key, choices]) => [
+      key,
+      choices.find((h) => headers.includes(h)) ?? "",
+    ]),
+  );
+  return {
+    name: file.name,
+    headers,
+    rows: result.data,
+    kind,
+    columns,
+    mappingSource: "automatic",
+  };
 }
 export function assemble(
   files: ParsedFile[],
@@ -126,14 +220,16 @@ export function assemble(
   const settings = new Map<string, Record<string, string>>();
   const names = new Map<string, Record<string, string>>();
   for (const f of files) {
-    for (const r of f.rows) {
+    for (const raw of f.rows) {
+      const r = mappedRow(f, raw);
       if (f.kind === "campaigns") campaigns.set(get(r, "campaignId"), r);
       if (f.kind === "settings") settings.set(get(r, "adsetId"), r);
       if (f.kind === "adsettings") names.set(get(r, "adId"), r);
     }
   }
   for (const f of files) {
-    for (const r of f.rows) {
+    for (const raw of f.rows) {
+      const r = mappedRow(f, raw);
       if (f.kind === "adsets" || f.kind === "ads") {
         const ad = names.get(get(r, "adId")) ?? {};
         const id = get(r, "adsetId") || get(ad, "adsetId");
@@ -164,6 +260,8 @@ export function assemble(
           clicks: num(get(r, "clicks")),
           purchases: num(get(r, "purchases")),
           value: num(get(r, "value")),
+          reach: num(get(r, "reach")),
+          frequency: num(get(r, "frequency")),
         };
         if (f.kind === "ads") {
           d.adId = get(r, "adId");
@@ -175,10 +273,10 @@ export function assemble(
       }
       if (f.kind === "events") {
         const event: BudgetEvent = {
-          adsetId: r.object_id,
-          changedAt: stamp(r.changed_at, meta.fetchedAt),
-          oldBudget: num(r.old_budget_inr ?? ""),
-          newBudget: num(r.new_budget_inr ?? "") ?? 0,
+          adsetId: get(r, "objectId"),
+          changedAt: stamp(get(r, "changedAt"), meta.fetchedAt),
+          oldBudget: num(get(r, "oldBudget")),
+          newBudget: num(get(r, "newBudget")) ?? 0,
           timezoneVerified: false,
         };
         result.events.push(event);

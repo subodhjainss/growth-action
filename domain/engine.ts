@@ -152,7 +152,12 @@ function accountDay(now: Date, tz: string) {
 export function assessImport(
   data: ImportData,
   context: BusinessContext,
-  options: { policyValidated?: boolean; demo?: boolean; now?: Date } = {},
+  options: {
+    policyValidated?: boolean;
+    demo?: boolean;
+    now?: Date;
+    priorDecisions?: Decision[];
+  } = {},
 ): Recommendation[] {
   // Production parameters remain unset until the independent operator gate. No caller can turn them into product truth.
   const demo = options.demo === true && data.source === "demo";
@@ -232,6 +237,46 @@ export function assessImport(
       missing.push(
         "A business constraint needs review before a budget change.",
       );
+    const prior = (options.priorDecisions ?? [])
+      .filter(
+        (d) =>
+          d.adsetId === s.adsetId && Number.isFinite(Date.parse(d.decidedAt)),
+      )
+      .sort((a, b) => b.decidedAt.localeCompare(a.decidedAt))[0];
+    if (prior) {
+      supporting.push(
+        `Previous operator decision: ${prior.decision} on ${prior.decidedAt}.${prior.reason ? ` Reason: ${prior.reason}` : ""}`,
+      );
+      if (prior.decision === "REJECTED") {
+        contradicting.push(
+          "The operator rejected the prior recommendation. Their reason is retained; rejection does not silently rewrite policy.",
+        );
+      } else if (
+        prior.finalBudget !== null &&
+        prior.baselineBudget !== null &&
+        Math.abs(prior.finalBudget - prior.baselineBudget) > 0.005
+      ) {
+        const observed = inferImplementation(prior, s);
+        if (observed.state !== "Done as approved") {
+          safety.push(
+            `The prior approved change is ${observed.state.toLowerCase()}; resolve it before proposing another budget change.`,
+          );
+        } else {
+          supporting.push(
+            "Current configuration matches the prior final amount; this does not prove who made the change or its effect.",
+          );
+          const decisionDay = accountDay(
+            new Date(prior.decidedAt),
+            data.timezone,
+          );
+          if (!rows.some((x) => x.date > decisionDay && x.date <= end)) {
+            safety.push(
+              "The prior approved change has no subsequent complete-day performance; do not stack a new change.",
+            );
+          }
+        }
+      }
+    }
     const ev =
       data.events
         .filter((x) => x.adsetId === s.adsetId)

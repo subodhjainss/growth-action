@@ -50,6 +50,8 @@ import {
 import { demoContext, demoData } from "../domain/demo";
 import {
   assemble,
+  applySavedMapping,
+  saveMapping,
   downloadTemplates,
   fieldMapping,
   parseFile,
@@ -223,6 +225,10 @@ export default function App() {
       setContext(workspace.context);
       setMin(workspace.context.minimumRoas?.toString() ?? "");
       setTarget(workspace.context.targetRoas?.toString() ?? "");
+      if (workspace.latestImport?.data.currency)
+        setCurrency(workspace.latestImport.data.currency);
+      if (workspace.latestImport?.data.timezone)
+        setTimezone(workspace.latestImport.data.timezone);
       setScreen(workspace.latestImport ? "today" : "setup");
     }
   }, [workspace]);
@@ -385,11 +391,9 @@ export default function App() {
     setError("");
     setBusy("Reading file headers and checking formats.");
     try {
-      const parsed = await Promise.all([...list].map(parseFile));
-      if (parsed.some((x) => x.kind === "unknown"))
-        throw new Error(
-          "A file could not be mapped. Use the field guide below to check its headers.",
-        );
+      const parsed = (await Promise.all([...list].map(parseFile))).map((f) =>
+        applySavedMapping(f, workspace?.account?.mapping ?? workspace?.mapping),
+      );
       setFiles((old) => [
         ...old.filter((o) => !parsed.some((p) => p.name === o.name)),
         ...parsed,
@@ -440,7 +444,10 @@ export default function App() {
         measurementVerified: data.measurementVerified,
         source: "csv",
       };
-      const mapping = Object.fromEntries(files.map((f) => [f.name, f.kind]));
+      const mapping = saveMapping(
+        files,
+        workspace?.account?.mapping ?? workspace?.mapping,
+      );
       const importId = await beginImport({ accountId, metadata, mapping });
       let sequence = 0;
       const count =
@@ -1362,7 +1369,10 @@ export default function App() {
                           <span>
                             {f.name}
                             <small>
-                              {f.kind} · {f.rows.length.toLocaleString()} rows
+                              {f.kind} · {f.rows.length.toLocaleString()} rows ·{" "}
+                              {f.mappingSource === "saved"
+                                ? "Saved mapping reused"
+                                : "Review mapping below"}
                             </small>
                           </span>
                           <button
@@ -1379,6 +1389,88 @@ export default function App() {
                       ))}
                     </ul>
                   )}
+                  {files.map((file) => (
+                    <details
+                      className="export-guide"
+                      key={`mapping-${file.name}`}
+                    >
+                      <summary>
+                        Review columns: {file.name}
+                        <ChevronDown size={16} />
+                      </summary>
+                      <p>
+                        Choose only equivalent fields. Link clicks and outbound
+                        clicks are different metrics; changing a label does not
+                        change its meaning. Blank selections stay missing.
+                      </p>
+                      <label>
+                        Dataset for {file.name}
+                        <select
+                          value={file.kind}
+                          onChange={(e) =>
+                            setFiles(
+                              files.map((f) =>
+                                f.name === file.name
+                                  ? {
+                                      ...f,
+                                      kind: e.target
+                                        .value as ParsedFile["kind"],
+                                      mappingSource: "edited",
+                                    }
+                                  : f,
+                              ),
+                            )
+                          }
+                        >
+                          <option value="unknown">Choose dataset</option>
+                          <option value="adsets">Daily ad sets</option>
+                          <option value="ads">Daily ads</option>
+                          <option value="settings">Ad-set settings</option>
+                          <option value="campaigns">Campaign settings</option>
+                          <option value="events">Budget events</option>
+                          <option value="adsettings">Ad settings</option>
+                        </select>
+                      </label>
+                      <div className="form-grid">
+                        {Object.keys(fieldMapping).map((key) => (
+                          <label key={key}>
+                            {key}
+                            <select
+                              aria-label={`${file.name}: ${key}`}
+                              value={file.columns?.[key] ?? ""}
+                              onChange={(e) =>
+                                setFiles(
+                                  files.map((f) =>
+                                    f.name === file.name
+                                      ? {
+                                          ...f,
+                                          columns: {
+                                            ...f.columns,
+                                            [key]: e.target.value,
+                                          },
+                                          mappingSource: "edited",
+                                        }
+                                      : f,
+                                  ),
+                                )
+                              }
+                            >
+                              <option value="">Not provided</option>
+                              {file.headers.map((h) => (
+                                <option key={h} value={h}>
+                                  {h}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        ))}
+                      </div>
+                      <small>
+                        These choices are saved privately and reused for exports
+                        with the same columns, even when the filename changes.
+                      </small>
+                    </details>
+                  ))}
                   <details className="export-guide">
                     <summary>
                       How to get the right data from Meta
@@ -1427,8 +1519,8 @@ export default function App() {
                     </summary>
                     <p>
                       Recognized export headers are mapped automatically and the
-                      file-to-dataset mapping is saved. Unsupported names
-                      produce a visible error rather than a guessed match.
+                      column choices are saved privately. Review unsupported
+                      names rather than accepting a guessed match.
                     </p>
                     <div className="mapping-list">
                       {Object.entries(fieldMapping)
